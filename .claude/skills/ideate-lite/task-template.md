@@ -1,4 +1,5 @@
 // {id-title}/task.md
+// title should be no more than 1 to 3 words.
 // One line per bullet.
 // This is a none technical document.
 # {id} - {title}
