@@ -19,3 +19,4 @@ A paragraph that summarizes the important context for this task.
 
 ## Notes
 1. Append any new minor decisions here.
+2. Append any technical or implementation details here.
