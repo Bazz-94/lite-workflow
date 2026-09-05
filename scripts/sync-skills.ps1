@@ -9,8 +9,9 @@
     exist in the repo are never touched.
 
 .EXAMPLE
-    ./scripts/sync-skills.ps1 -DryRun
     ./scripts/sync-skills.ps1
+    ./scripts/sync-skills.ps1 -DryRun
+    ./scripts/sync-skills.ps1 -IgnoreExclude
     ./scripts/sync-skills.ps1 -Skill plan-lite
 #>
 [CmdletBinding()]
