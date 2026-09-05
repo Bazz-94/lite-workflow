@@ -1,48 +1,53 @@
 ---
 name: build-lite
-description: Implement tasks from a feature plan, ticking them off as they complete.
-argument-hint: [--auto] [slug]
-arguments: mode slug
+description: Implement a task's plan sub-task by sub-task, ticking them off as they complete.
+argument-hint: [task id] [--auto]
+arguments: task_id mode
 disable-model-invocation: true
-allowed-tools: Read Edit Write Grep Glob Bash(git *) Skill(code-review *)
 ---
 
-# Build from plan
+# Plan to code
 
 ## Resolve arguments first
 
-- If `$mode` is exactly `--auto`, the mode is **auto** and the slug is `$slug`.
-- Otherwise the mode is **review** and the slug is `$mode`.
-- If the resolved slug is empty, ask which feature and stop.
+Arguments are `$task_id` then `$mode`.
 
-Read `artifacts/features/<slug>/plan.md`. If it doesn't exist, tell the user to run `/plan-lite` first and stop.
+- `$task_id` empty: ask for one and stop.
+- `$mode` exactly `--auto`: **auto** — step 5 is skipped for sub-tasks, so they run unattended. It still runs on the whole-task iteration, the first the user sees of the run.
+- Anything else: **review** — step 5 runs on every sub-task, so the user sees each one as it lands.
 
-Ticked tasks are already done — skip them and resume at the first unticked one. A plan may have been revised between runs, so read the current file rather than assuming it matches what you saw earlier in the session. Say which task you're resuming at before making any change.
+The task directory is `artifacts/lite-workflow/$task_id/`. If it does not exist, list the task ids that do exist and stop. If it holds no `plan.md`, send the user to `/plan-lite` and stop.
 
-## Standing rules — apply to every task, every turn
+Read `plan.md` and `task.md` from disk rather than trusting anything seen earlier in the session — another session may have moved them on.
 
-Work the unchecked tasks in file order. For each one: make the change, run the task's Verify command, then tick its checkbox in `plan.md`. Never tick a box whose verification didn't pass.
+A run may be continuing an earlier session: an `In progress` sub-task was interrupted, so check the working tree before redoing that work. A sub-task left at `Review required` is already implemented and verified — resume it at step 5. Otherwise start at the first sub-task that is not `Done`.
 
-Stay inside the task's listed files. If the change genuinely requires touching a file the task doesn't list, that's a stop condition, not a judgement call.
+State the mode, the sub-task you are starting or resuming at, and why, before making any change.
 
-**Stop immediately and end the turn if:**
+## Standing rules
 
-- A Verify command fails and the fix isn't obvious in one attempt
-- The task is ambiguous enough that you'd be guessing at intent
-- The work would touch files outside the task's listed set
+- `task.md` is the contract and `plan.md` is the route.
+- Update `plan.md` as you go. It is the only state — a session that dies mid-sub-task must be resumable from the file alone.
+- You review your own work on every sub-task. What you never spawn for a sub-task is a *sub-agent* — the run's one sub-agent review happens on the whole-task iteration.
 
-State which condition tripped, what you did up to that point, and what you'd need to continue. Do not proceed past a stop condition in either mode.
+## The iteration
 
-## After a story finishes
+One iteration covers one sub-task, in plan order.
 
-When ticking a task completes every task under a story, invoke `/code-review` for that story's changes before reporting. Fold its findings into the end-of-turn report. A review finding is information, not a stop condition — surface it and keep going unless it independently meets one of the stop conditions above.
+1. **Mark it `In progress`** in `plan.md` before touching any code.
+2. **Implement** what its **TODO** describes, in the files it lists.
+3. **Verify.** Run the build, run the tests for the touched area, and clear any diagnostics or lint the change introduced. Fix and re-run until clean. Then check the sub-task's **Acceptance criteria** are met — a green build is not the same as the criteria being satisfied.
+4. **Review your own work.** Read the sub-task's diff back with `git diff` and check it against the sub-task and the requirements in `task.md` — correctness bugs, acceptance criteria missed, scope creep, departures from the codebase's existing patterns. Fix what you find and re-verify.
+5. **Human review.** Set the sub-task's **Status** to `Review required` in `plan.md`, then present the sub-task, a summary of the diff, and the verification result. Wait.
+6. **Refine** — only if they had findings. Implement them, re-verify, then back to step 5. Their approval is the only thing that ends this loop.
+7. **Close it out.** Once approved, change the sub-task's **Status** from `Review required` to `Done` in `plan.md`. In auto mode, where step 5 is skipped, go straight to `Done`.
 
-## Mode: review
+## The whole-task iteration
 
-After each task, end the turn with: the task name, a summary of the diff, and the verification result. Wait for the user before the next task.
+Once every sub-task is `Done`, run one last iteration to review the whole task against `task.md`.
 
-## Mode: auto
-
-Continue through tasks without stopping for approval. End the turn when the current story's tasks are all ticked, and report every task completed plus the state of that story's acceptance criteria in `story.md`.
-
-Auto mode changes when you report, not what stops you. The stop conditions above still apply.
+1. **Sub-agent review.** Spawn a sub-agent, point it at `task.md`, and have it read the whole task's diff with `git diff`. Brief it to report correctness bugs, requirements missed, scope creep, departures from existing patterns, and seams between sub-tasks. Do not review the diff yourself — this pass is the sub-agent's.
+2. **Act on the findings.** Fix what is real, say what you reject and why, re-verify.
+3. **Human review.** Set `task.md`'s **Status** to `Review required`, then present the diff summary, the verification result, and anything you rejected. Wait. Runs in both modes.
+4. **Refine** — only if they had findings. Implement, re-verify, review the diff yourself, back to step 3. No sub-agent from here on: step 1 happens once per run.
+5. **Close it out.** Set `task.md`'s **Status** to `Done`. If a task under the same two-letter code is still not `Done`, name the next one — `/clear`, then `/plan-lite {next task id}`.

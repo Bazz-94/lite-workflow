@@ -1,52 +1,55 @@
 ---
 name: plan-lite
-description: Research the codebase and turn approved stories into an implementation plan.
-argument-hint: [slug]
-arguments: slug
+description: Research the codebase and create an implementation plan for the task.
+argument-hint: [task id]
+arguments: task_id
 disable-model-invocation: true
-allowed-tools: Read Grep Glob Write Skill(research *)
 ---
 
-# Story to implementation plan
+# Task to plan
 
-Feature slug: `$slug`. Requires `artifacts/features/$slug/story.md` to exist; if it doesn't, tell the user to run `/idea-lite` first and stop.
+The task id: `$task_id`. If it is empty, ask for one before doing anything else.
 
-## New or replan
+The task directory is `artifacts/lite-workflow/$task_id/`. Everything below reads and writes inside it:
 
-Check whether `artifacts/features/$slug/plan.md` exists.
+```
+artifacts/lite-workflow/$task_id/task.md   <- the contract
+artifacts/lite-workflow/$task_id/plan.md   <- you write it, step 4
+```
 
-- **It doesn't** — follow the steps below.
-- **It does** — this is a replan. Jump to [Replanning](#replanning).
+If the directory does not exist, list the task ids that do exist and stop. If it holds no `task.md`, send the user to `/ideate-lite` and stop.
+
+Read `task.md` first, along with the `task.md` of any id under its **Dependencies**. **`task.md` is the contract**: the plan implements its requirements and nothing outside them.
+
+If `plan.md` already exists this is an **amendment**. The steps are the same — each says what changes.
+
+## Standing rules
+
+- This is a conversation: the sub-tasks get agreed in the chat, then written to `plan.md` in step 4.
+- Plan against what the codebase actually does. Every sub-task points at files research found.
+- If a requirement in the contract cannot be built as written, say so and get an answer before planning around it.
 
 ## Steps
 
-1. Invoke `/research $slug` and wait for it to return. This runs unattended — do not ask the user anything during it.
-2. Write its findings to `artifacts/features/$slug/research.md`. Preserve the file paths and examples verbatim; they're the useful part.
-3. Generate a task list and present it in the chat. Do not write `plan.md` yet.
-4. Ask the user to approve, reorder, or cut tasks. Revise and re-present.
-5. On approval, write `artifacts/features/$slug/plan.md` using [plan-template.md](plan-template.md).
+1. **Research the codebase**, scoped to the task and nothing wider. Delegate the reading to a sub-agent where it is more than a few files. Ask the user nothing while it runs. Be specific over complete — a path and a line number beats a paragraph. Establish:
+   - **Relevant code paths** — the files, modules, tests and functions the task will change, with paths.
+   - **Current behaviour** — the context that matters for this task.
+   - **Tests** — which existing tests will be re-run for regression or updated.
+   Research is done when every file the task will change has a path against it. Report the findings in a few lines and the **open questions** they raise.
+2. **Refine with the user.** This is where implementation details get settled — approach, trade-offs, ordering, what to leave out. Ask in batches of 2-4 questions.
+3. **Get approval.** Present the sub-task breakdown — number, title, files, acceptance criteria — sized per [Sub-task sizing](#sub-task-sizing). Revise and re-present until they approve. Their approval is the only thing that ends this step.
+4. **Write `plan.md`** from [plan-template.md](plan-template.md). Strip the `//` comment lines. Every sub-task starts at **Status** `Not started`;
+   Amendment: size the rewrite to the change — a small one appends sub-tasks at the next free numbers and leaves the rest alone, a large one rewrites the plan.
+5. **Update `task.md`** only if the session changed a major decision — a requirement, a boundary, something ruled out. Append it to **Notes** and leave the requirements as they stand: the contract records what the task must do, not how the plan does it. If the change alters what the task delivers, say so and send the user to `/ideate-lite`.
+6. **Report** the next step: `/clear`, then `/build-lite $task_id`.
 
-## Replanning
+## Sub-task sizing
 
-The existing `plan.md` holds progress state. Losing a tick means work gets redone or silently skipped, so treat the file as data to merge into, not a draft to overwrite.
+One sub-task is one commit's worth of work. Each must be:
 
-1. Read `plan.md` and note which tasks are ticked.
-2. Re-run research only if `story.md` changed since `research.md` was written, or the user asks for it. Otherwise reuse the existing `research.md` — research is the slow part and stale-but-relevant beats a needless rerun.
-3. Work out the delta against the current stories: which tasks are unaffected, which need changing, which are new, which are now obsolete.
-4. Present the delta in the chat as three lists — **keep**, **change or add**, **drop** — with the ticked state shown against each. Do not write anything yet.
-5. **Flag every ticked task that lands in "change" or "drop".** That's completed work being invalidated. Name it and let the user decide; never quietly drop a ticked task.
-6. On approval, rewrite `plan.md`: carry ticked tasks across with their ticks intact and their IDs unchanged, insert new tasks with the next free IDs, and remove dropped ones.
+- A single coherent change, not a grab-bag. Split anything that needs two unrelated changes to satisfy its own criteria.
+- Scoped to a named set of files, listed against it.
+- Verifiable — the acceptance criteria say what to run or observe, not "it works".
+- Ordered so the build is green after each one. A sub-task that leaves the tree broken belongs merged into the next.
 
-Task IDs are referenced in commits and conversation. Reusing a retired ID for a different task is worse than leaving a gap.
-
-## Task sizing rules
-
-Each task must be:
-
-- One commit's worth of work
-- Scoped to a named set of files, listed in the task
-- Verifiable by a specific command, named in the task
-
-Group tasks under the story they serve. If a task serves two stories, it belongs to neither — split it or promote it to a setup task at the top.
-
-If research flagged a story as blocked, surface that before presenting tasks. Do not plan around it silently.
+Number sub-tasks sequentially from 1 in build order. `/build-lite` and the user both refer to them by number, so a number, once issued, is permanent: new sub-tasks take the next free number, and a gap is fine.
