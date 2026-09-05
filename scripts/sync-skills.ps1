@@ -22,10 +22,19 @@ param(
     [string[]]$Skill,
 
     # Show what would change without writing anything.
-    [switch]$DryRun
+    [switch]$DryRun,
+
+    # Sync files that would otherwise be skipped by the exclude list.
+    [switch]$IgnoreExclude
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Relative paths (skill folder\file) never touched at the destination, since
+# they hold user-owned data rather than skill source. Override with -IgnoreExclude.
+$ExcludeList = @(
+    'status-lite\tracked-repos.md'
+)
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $source   = Join-Path $repoRoot '.claude\skills'
@@ -69,6 +78,10 @@ foreach ($dir in $skillDirs) {
         $relative = $file.FullName.Substring($dir.FullName.Length).TrimStart('\')
         $target   = Join-Path $destDir $relative
 
+        if (-not $IgnoreExclude -and ($ExcludeList -contains "$($dir.Name)\$relative")) {
+            continue
+        }
+
         $action = $null
         if (-not (Test-Path -LiteralPath $target)) {
             $action = 'ADD'
@@ -100,6 +113,9 @@ foreach ($dir in $skillDirs) {
             $relative = $file.FullName.Substring($destDir.Length).TrimStart('\')
             $origin   = Join-Path $dir.FullName $relative
             if (Test-Path -LiteralPath $origin) { continue }
+            if (-not $IgnoreExclude -and ($ExcludeList -contains "$($dir.Name)\$relative")) {
+                continue
+            }
 
             if ($DryRun) {
                 Write-Host "  DELETE $relative" -ForegroundColor Yellow
