@@ -4,8 +4,7 @@
 A short description of the implementation plan.
 
 ## API Design
-// Describes the new or modified modules. Prefer deep modules.
-// The path is where the module lives in the codebase, not the interface file in the task dir.
+// Describes the new or modified modules.
 * **{`path/to/module.ts`}** - short description of the new module, or of how an existing module changes.
 
 ## Context

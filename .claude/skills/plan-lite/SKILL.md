@@ -15,7 +15,6 @@ The task directory is `artifacts/lite-workflow/$task_id/`. Everything below read
 ```
 artifacts/lite-workflow/$task_id/task.md   <- the contract
 artifacts/lite-workflow/$task_id/plan.md   <- you write it, step 4
-artifacts/lite-workflow/$task_id/{module}.{ext}   <- the interfaces, you write them, step 5
 ```
 
 If the directory does not exist, list the task ids that do exist and stop. If it holds no `task.md`, send the user to `/ideate-lite` and stop.
@@ -41,10 +40,8 @@ If `plan.md` already exists this is an **amendment**. The steps are the same —
 3. **Get approval.** Present the sub-task breakdown — number, title, files, acceptance criteria — sized per [Sub-task sizing](#sub-task-sizing). Revise and re-present until they approve. Their approval is the only thing that ends this step.
 4. **Write `plan.md`** from [plan-template.md](plan-template.md). Strip the `//` comment lines. Every sub-task starts at **Status** `Not started`;
    Amendment: size the rewrite to the change — a small one appends sub-tasks at the next free numbers and leaves the rest alone, a large one rewrites the plan.
-5. **Write the interfaces.** For every module under **API Design** in `plan.md`, write its interface into the task dir, in the language's own file type. For an existing module, only the parts that change. These are the contract `/build-lite` implements against, not files to be copied into the codebase.
-   Amendment: update the interfaces the change touches and leave the rest alone.
-6. **Update `task.md`** only if the session changed a major decision — a requirement, a boundary, something ruled out. Append it to **Notes** and leave the requirements as they stand: the contract records what the task must do, not how the plan does it. If the change alters what the task delivers, say so and send the user to `/ideate-lite`.
-7. **Report** the next step: `/clear`, then `/build-lite $task_id`.
+5. **Update `task.md`** only if the session changed a major decision — a requirement, a boundary, something ruled out. Append it to **Notes** and leave the requirements as they stand: the contract records what the task must do, not how the plan does it. If the change alters what the task delivers, say so and send the user to `/ideate-lite`.
+6. **Report** the next step: `/clear`, then `/build-lite $task_id`.
 
 ## Sub-task sizing
 

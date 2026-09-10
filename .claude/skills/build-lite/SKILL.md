@@ -20,8 +20,6 @@ The task directory is `artifacts/lite-workflow/$task_id/`. If it does not exist,
 
 Read `plan.md` and `task.md` from disk rather than trusting anything seen earlier in the session — another session may have moved them on.
 
-The task dir also holds the interface files `/plan-lite` wrote — the API contract for the modules they cover. Read them, and implement against them in any sub-task that touches those modules. They stay in the task dir; they are not copied into the codebase.
-
 A run may be continuing an earlier session: an `In progress` sub-task was interrupted, so check the working tree before redoing that work. A sub-task left at `Review required` is already implemented and verified — resume it at step 5. Otherwise start at the first sub-task that is not `Done`.
 
 State the mode, the sub-task you are starting or resuming at, and why, before making any change.
