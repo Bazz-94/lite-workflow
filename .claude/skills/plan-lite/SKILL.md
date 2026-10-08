@@ -36,7 +36,10 @@ If `plan.md` already exists this is an **amendment**. The steps are the same —
    - **Current behaviour** — the context that matters for this task.
    - **Tests** — which existing tests will be re-run for regression or updated.
    Research is done when every file the task will change has a path against it. Report the findings in a few lines and the **open questions** they raise.
-2. **Refine with the user.** This is where implementation details get settled — approach, trade-offs, ordering, what to leave out. Ask in batches of 2-4 questions.
+2. **Refine with the user.** This is where implementation details get settled — approach, trade-offs, ordering, what to leave out. Ask in batches of 2-4 questions. 
+   Interview me relentlessly about every aspect of this plan until we reach a shared understanding. 
+   Walk down each branch of the design tree resolving dependencies between decisions one by one.
+   If a question can be answered by exploring the codebase, explore the codebase instead. 
 3. **Get approval.** Present the sub-task breakdown — number, title, files, acceptance criteria — sized per [Sub-task sizing](#sub-task-sizing). Revise and re-present until they approve. Their approval is the only thing that ends this step.
 4. **Write `plan.md`** from [plan-template.md](plan-template.md). Strip the `//` comment lines. Every sub-task starts at **Status** `Not started`;
    Amendment: size the rewrite to the change — a small one appends sub-tasks at the next free numbers and leaves the rest alone, a large one rewrites the plan.
