@@ -10,14 +10,14 @@ disable-model-invocation: true
 
 The task id: `$task_id`. If it is empty, ask for one before doing anything else.
 
-The task directory is `artifacts/lite-workflow/$task_id/`. Everything below reads and writes inside it:
+`$task_id` is the id only, e.g. `qn-00`. The task directory is named `{task id}-{title}`, e.g. `qn-00-auth`, so find it by globbing `artifacts/lite-workflow/$task_id-*/`. Everything below reads and writes inside it:
 
 ```
-artifacts/lite-workflow/$task_id/task.md   <- the contract
-artifacts/lite-workflow/$task_id/plan.md   <- you write it, step 4
+artifacts/lite-workflow/{task dir}/task.md   <- the contract
+artifacts/lite-workflow/{task dir}/plan.md   <- you write it, step 4
 ```
 
-If the directory does not exist, list the task ids that do exist and stop. If it holds no `task.md`, send the user to `/ideate-lite` and stop.
+If no directory matches, list the directories that do exist and stop. If `$task_id` already includes the title, use it as given. If it holds no `task.md`, send the user to `/ideate-lite` and stop.
 
 Read `task.md` first, along with the `task.md` of any id under its **Dependencies**. **`task.md` is the contract**: the plan implements its requirements and nothing outside them.
 
