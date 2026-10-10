@@ -16,7 +16,7 @@ Arguments are `$task_id` then `$mode`.
 - `$mode` exactly `--auto`: **auto** — step 5 is skipped for sub-tasks, so they run unattended. It still runs on the whole-task iteration, the first the user sees of the run.
 - Anything else: **review** — step 5 runs on every sub-task, so the user sees each one as it lands.
 
-The task directory is `artifacts/lite-workflow/$task_id/`. If it does not exist, list the task ids that do exist and stop. If it holds no `plan.md`, send the user to `/plan-lite` and stop.
+`$task_id` is the id only, e.g. `qn-00`. The task directory is named `{task id}-{title}`, e.g. `qn-00-auth`, so find it by globbing `artifacts/lite-workflow/$task_id-*/`. If `$task_id` already includes the title, use it as given. If no directory matches, list the directories that do exist and stop. If it holds no `plan.md`, send the user to `/plan-lite` and stop.
 
 Read `plan.md` and `task.md` from disk rather than trusting anything seen earlier in the session — another session may have moved them on.
 
